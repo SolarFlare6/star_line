@@ -4,7 +4,7 @@ plugins {
   alias(libs.plugins.compose.compiler)
   alias(libs.plugins.kotlin.serialization)
   // NOTE: Uncomment this and add google-services.json to enable real Firebase Auth:
-  // alias(libs.plugins.google.services)
+  alias(libs.plugins.google.services)
 }
 
 android {
@@ -88,6 +88,7 @@ dependencies {
   // Firebase
   implementation(platform(libs.firebase.bom))
   implementation(libs.firebase.auth)
+  implementation(libs.firebase.messaging)
 
   // Material Icons Extended (for DarkMode, Settings, etc.)
   implementation(libs.androidx.compose.material.icons.extended)

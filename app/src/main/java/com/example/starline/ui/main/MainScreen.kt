@@ -57,6 +57,7 @@ fun AppScaffold(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(SpaceBackground.copy(alpha = 0.92f))
+                    .statusBarsPadding()
                     .padding(horizontal = 20.dp, vertical = 14.dp)
             ) {
                 Row(

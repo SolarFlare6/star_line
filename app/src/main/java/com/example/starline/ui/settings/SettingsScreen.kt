@@ -35,25 +35,14 @@ fun SettingsScreen(
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 20.dp, vertical = 16.dp)
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.statusBarsPadding()
+        ) {
             IconButton(onClick = onBack) {
                 Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back", tint = StarWhite)
             }
             Text("Settings", style = MaterialTheme.typography.titleLarge, color = StarWhite, fontWeight = FontWeight.Bold)
-        }
-
-        Spacer(Modifier.height(24.dp))
-
-        // Appearance section
-        SettingsSectionHeader("Appearance")
-        SettingsCard {
-            SettingsToggleRow(
-                icon = Icons.Default.DarkMode,
-                title = "Dark Mode",
-                subtitle = "Keep the cosmos dark",
-                checked = darkMode,
-                onCheckedChange = { darkMode = it }
-            )
         }
 
         Spacer(Modifier.height(16.dp))
@@ -152,7 +141,7 @@ private fun SettingsSectionHeader(title: String) {
 
 @Composable
 private fun SettingsCard(content: @Composable () -> Unit) {
-    Box(
+    Column(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))

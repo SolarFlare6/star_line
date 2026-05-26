@@ -69,7 +69,10 @@ fun ProfileScreen(
             .padding(horizontal = 20.dp, vertical = 16.dp)
     ) {
         // Header
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.statusBarsPadding()
+        ) {
             IconButton(onClick = onBack) {
                 Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back", tint = StarWhite)
             }
