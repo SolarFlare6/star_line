@@ -1,0 +1,231 @@
+package com.example.starline.ui.settings
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import com.example.starline.theme.*
+
+@Composable
+fun SettingsScreen(
+    onBack: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var notificationsEnabled by remember { mutableStateOf(true) }
+    var darkMode by remember { mutableStateOf(true) }
+    var autoPlay by remember { mutableStateOf(false) }
+    var measurementSystem by remember { mutableStateOf("Metric") }
+
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 20.dp, vertical = 16.dp)
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            IconButton(onClick = onBack) {
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back", tint = StarWhite)
+            }
+            Text("Settings", style = MaterialTheme.typography.titleLarge, color = StarWhite, fontWeight = FontWeight.Bold)
+        }
+
+        Spacer(Modifier.height(24.dp))
+
+        // Appearance section
+        SettingsSectionHeader("Appearance")
+        SettingsCard {
+            SettingsToggleRow(
+                icon = Icons.Default.DarkMode,
+                title = "Dark Mode",
+                subtitle = "Keep the cosmos dark",
+                checked = darkMode,
+                onCheckedChange = { darkMode = it }
+            )
+        }
+
+        Spacer(Modifier.height(16.dp))
+
+        // Notifications section
+        SettingsSectionHeader("Notifications")
+        SettingsCard {
+            SettingsToggleRow(
+                icon = Icons.Default.Notifications,
+                title = "Push Notifications",
+                subtitle = "Get alerts about space events",
+                checked = notificationsEnabled,
+                onCheckedChange = { notificationsEnabled = it }
+            )
+            SettingsDivider()
+            SettingsToggleRow(
+                icon = Icons.Default.PlayArrow,
+                title = "Auto-Play Updates",
+                subtitle = "Automatically load new content",
+                checked = autoPlay,
+                onCheckedChange = { autoPlay = it }
+            )
+        }
+
+        Spacer(Modifier.height(16.dp))
+
+        // Measurement section
+        SettingsSectionHeader("Units & Measurements")
+        SettingsCard {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(NeonSecondary.copy(alpha = 0.12f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(Icons.Default.Straighten, null, tint = NeonSecondary, modifier = Modifier.size(20.dp))
+                    }
+                    Spacer(Modifier.width(14.dp))
+                    Text("Measurement System", color = StarWhite, fontWeight = FontWeight.Medium, modifier = Modifier.weight(1f))
+                }
+                Spacer(Modifier.height(12.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    listOf("Metric", "Imperial").forEach { system ->
+                        val isSelected = measurementSystem == system
+                        FilterChip(
+                            selected = isSelected,
+                            onClick = { measurementSystem = system },
+                            label = { Text(system) },
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = NeonSecondary.copy(alpha = 0.2f),
+                                selectedLabelColor = NeonSecondary,
+                                containerColor = SpaceSurface,
+                                labelColor = TextSecondary
+                            ),
+                            border = FilterChipDefaults.filterChipBorder(
+                                enabled = true,
+                                selected = isSelected,
+                                selectedBorderColor = NeonSecondary.copy(alpha = 0.4f),
+                                borderColor = SpaceBorder
+                            )
+                        )
+                    }
+                }
+            }
+        }
+
+        Spacer(Modifier.height(16.dp))
+
+        // About section
+        SettingsSectionHeader("About")
+        SettingsCard {
+            SettingsInfoRow(icon = Icons.Default.Info, title = "Version", value = "1.0.0")
+            SettingsDivider()
+            SettingsInfoRow(icon = Icons.Default.Code, title = "Build", value = "Release")
+            SettingsDivider()
+            SettingsInfoRow(icon = Icons.Default.Language, title = "Region", value = "Global")
+        }
+
+        Spacer(Modifier.height(80.dp))
+    }
+}
+
+@Composable
+private fun SettingsSectionHeader(title: String) {
+    Text(
+        title,
+        style = MaterialTheme.typography.titleSmall,
+        color = NeonPrimary,
+        fontWeight = FontWeight.SemiBold,
+        modifier = Modifier.padding(start = 4.dp, bottom = 8.dp)
+    )
+}
+
+@Composable
+private fun SettingsCard(content: @Composable () -> Unit) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .background(SpaceSurface)
+            .border(1.dp, SpaceBorder, RoundedCornerShape(16.dp))
+    ) {
+        content()
+    }
+}
+
+@Composable
+private fun SettingsToggleRow(
+    icon: ImageVector,
+    title: String,
+    subtitle: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit
+) {
+    Row(
+        modifier = Modifier.padding(16.dp).fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier
+                .size(40.dp)
+                .clip(RoundedCornerShape(12.dp))
+                .background(NeonPrimary.copy(alpha = 0.12f)),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(icon, null, tint = NeonPrimary, modifier = Modifier.size(20.dp))
+        }
+        Spacer(Modifier.width(14.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(title, color = StarWhite, fontWeight = FontWeight.Medium)
+            Text(subtitle, style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+        }
+        Switch(
+            checked = checked,
+            onCheckedChange = onCheckedChange,
+            colors = SwitchDefaults.colors(
+                checkedThumbColor = StarWhite,
+                checkedTrackColor = NeonPrimary,
+                uncheckedTrackColor = SpaceBorder
+            )
+        )
+    }
+}
+
+@Composable
+private fun SettingsInfoRow(icon: ImageVector, title: String, value: String) {
+    Row(
+        modifier = Modifier.padding(16.dp).fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier
+                .size(40.dp)
+                .clip(RoundedCornerShape(12.dp))
+                .background(NeonTertiary.copy(alpha = 0.12f)),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(icon, null, tint = NeonTertiary, modifier = Modifier.size(20.dp))
+        }
+        Spacer(Modifier.width(14.dp))
+        Text(title, color = StarWhite, fontWeight = FontWeight.Medium, modifier = Modifier.weight(1f))
+        Text(value, color = TextSecondary, style = MaterialTheme.typography.bodyMedium)
+    }
+}
+
+@Composable
+private fun SettingsDivider() {
+    HorizontalDivider(
+        modifier = Modifier.padding(horizontal = 16.dp),
+        color = SpaceBorder
+    )
+}
