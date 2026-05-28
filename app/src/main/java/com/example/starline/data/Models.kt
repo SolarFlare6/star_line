@@ -34,7 +34,9 @@ data class NewsArticle(
     val date: String,
     val summary: String,
     val fullText: String,
-    val readTime: String
+    val readTime: String,
+    val url: String = "",
+    val imageUrl: String = ""
 )
 
 @Serializable
@@ -51,4 +53,13 @@ data class ApodData(
     val explanation: String,
     val url: String,
     val date: String
+)
+
+@Serializable
+data class NasaMediaData(
+    val imageUrl: String?,
+    val description: String?,
+    val isFromCache: Boolean,
+    val isRateLimited: Boolean = false,
+    val collageUrls: List<String> = emptyList()
 )

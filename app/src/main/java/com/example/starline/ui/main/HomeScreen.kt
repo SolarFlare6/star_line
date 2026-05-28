@@ -48,6 +48,8 @@ fun HomeScreen(
     onNavigateToPlanets: () -> Unit,
     onNavigateToSatellites: () -> Unit,
     onNavigateToNews: () -> Unit,
+    onNavigateToPlanetDetail: (String) -> Unit,
+    onNavigateToSatelliteDetail: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -276,10 +278,10 @@ fun HomeScreen(
                 
                 Row(modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     favoritePlanets.forEach { planetName ->
-                        FavoriteChip(name = planetName, icon = Icons.Default.RocketLaunch, onClick = { onNavigateToPlanets() })
+                        FavoriteChip(name = planetName, icon = Icons.Default.RocketLaunch, onClick = { onNavigateToPlanetDetail(planetName) })
                     }
                     favoriteSatellites.forEach { satName ->
-                        FavoriteChip(name = satName, icon = Icons.Default.Satellite, onClick = { onNavigateToSatellites() })
+                        FavoriteChip(name = satName, icon = Icons.Default.Satellite, onClick = { onNavigateToSatelliteDetail(satName) })
                     }
                 }
                 Spacer(Modifier.height(24.dp))

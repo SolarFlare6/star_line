@@ -21,6 +21,8 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.runtime.*
 import com.example.starline.data.SpaceDataRepository
+import com.example.starline.data.NasaMediaData
+import coil.compose.AsyncImage
 import com.example.starline.theme.*
 
 @Composable
@@ -41,6 +43,21 @@ fun SatelliteDetailScreen(
     }
 
     var satellite by remember { mutableStateOf(initialSatellite) }
+    var nasaMedia by remember { mutableStateOf<NasaMediaData?>(null) }
+    var isLoadingNasaMedia by remember { mutableStateOf(true) }
+
+    LaunchedEffect(satelliteName) {
+        isLoadingNasaMedia = true
+        val media = repository.fetchNasaImageAndDescription(satelliteName)
+        nasaMedia = media
+        isLoadingNasaMedia = false
+    }
+
+    LaunchedEffect(nasaMedia) {
+        if (nasaMedia?.isRateLimited == true) {
+            android.widget.Toast.makeText(context, "NASA API rate limit reached. Displaying cached information.", android.widget.Toast.LENGTH_LONG).show()
+        }
+    }
 
     if (satelliteName.equals("ISS", ignoreCase = true)) {
         LaunchedEffect(Unit) {
@@ -77,6 +94,33 @@ fun SatelliteDetailScreen(
         }
 
         Spacer(Modifier.height(16.dp))
+
+        if (isLoadingNasaMedia) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(180.dp)
+                    .clip(RoundedCornerShape(20.dp))
+                    .background(SpaceSurface)
+                    .border(1.dp, SpaceBorder, RoundedCornerShape(20.dp)),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator(color = NeonSecondary)
+            }
+            Spacer(Modifier.height(16.dp))
+        } else if (nasaMedia?.imageUrl != null) {
+            AsyncImage(
+                model = nasaMedia?.imageUrl,
+                contentDescription = "${satellite.name} NASA Image",
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(180.dp)
+                    .clip(RoundedCornerShape(20.dp))
+                    .border(1.dp, SpaceBorder, RoundedCornerShape(20.dp)),
+                contentScale = androidx.compose.ui.layout.ContentScale.Crop
+            )
+            Spacer(Modifier.height(16.dp))
+        }
 
         // Header card
         Box(
@@ -163,6 +207,49 @@ fun SatelliteDetailScreen(
                 .padding(16.dp)
         ) {
             Text(satellite.description, style = MaterialTheme.typography.bodyMedium, color = TextSecondary, lineHeight = 22.sp)
+        }
+
+        // NASA Archives Log Section
+        if (nasaMedia?.description != null) {
+            Spacer(Modifier.height(20.dp))
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("NASA Archives Log", style = MaterialTheme.typography.titleMedium, color = StarWhite, fontWeight = FontWeight.Bold)
+                if (nasaMedia?.isFromCache == true) {
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(GlowAmber.copy(alpha = 0.15f))
+                            .border(1.dp, GlowAmber.copy(alpha = 0.3f), RoundedCornerShape(8.dp))
+                            .padding(horizontal = 8.dp, vertical = 2.dp)
+                    ) {
+                        Text(
+                            text = if (nasaMedia?.isRateLimited == true) "Cached (Rate Limit)" else "Cached Log",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = GlowAmber
+                        )
+                    }
+                }
+            }
+            Spacer(Modifier.height(8.dp))
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(SpaceSurface)
+                    .border(1.dp, SpaceBorder, RoundedCornerShape(16.dp))
+                    .padding(16.dp)
+            ) {
+                Text(
+                    text = nasaMedia?.description ?: "",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = TextSecondary,
+                    lineHeight = 22.sp
+                )
+            }
         }
 
         Spacer(Modifier.height(80.dp))
