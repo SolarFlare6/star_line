@@ -22,6 +22,7 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.platform.LocalContext
 import com.example.starline.data.SpaceDataRepository
 import com.example.starline.theme.*
 
@@ -31,8 +32,9 @@ fun PlanetDetailScreen(
     onBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val repository = remember { SpaceDataRepository() }
-    val planet = remember(planetName) { repository.planets.find { it.name == planetName } }
+    val context = LocalContext.current
+    val repository = remember(context) { SpaceDataRepository(context) }
+    val planet = remember(planetName, repository.planets) { repository.planets.find { it.name == planetName } }
 
     if (planet == null) {
         Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) {

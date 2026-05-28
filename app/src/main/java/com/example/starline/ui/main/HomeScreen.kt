@@ -1,11 +1,13 @@
 package com.example.starline.ui.main
 
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -15,21 +17,31 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Newspaper
 import androidx.compose.material.icons.filled.RocketLaunch
 import androidx.compose.material.icons.filled.Satellite
+import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
+import com.example.starline.data.ApodData
 import com.example.starline.data.SpaceDataRepository
+import com.example.starline.data.FavoritesManager
 import com.example.starline.theme.*
 import com.example.starline.ui.components.StarfieldBackground
+import kotlinx.coroutines.launch
 
 @Composable
 fun HomeScreen(
@@ -38,8 +50,42 @@ fun HomeScreen(
     onNavigateToNews: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val repository = remember { SpaceDataRepository() }
-    var currentFact by remember { mutableStateOf(repository.getRandomFact()) }
+    val context = LocalContext.current
+    val repository = remember(context) { SpaceDataRepository(context) }
+    val scope = rememberCoroutineScope()
+
+    var currentFact by remember { mutableStateOf("Loading cosmic truth...") }
+    var isFactLoading by remember { mutableStateOf(false) }
+
+    var apodData by remember { mutableStateOf<ApodData?>(null) }
+    var isApodLoading by remember { mutableStateOf(false) }
+
+    val favoritesManager = remember(context) { FavoritesManager(context) }
+    var favoritePlanets by remember { mutableStateOf(favoritesManager.getFavoritePlanets()) }
+    var favoriteSatellites by remember { mutableStateOf(favoritesManager.getFavoriteSatellites()) }
+
+    var rotationAngle by remember { mutableStateOf(0f) }
+    val animatedRotation by animateFloatAsState(
+        targetValue = rotationAngle,
+        animationSpec = tween(durationMillis = 1000, easing = LinearEasing),
+        label = "syncRotation"
+    )
+
+    LaunchedEffect(Unit) {
+        isFactLoading = true
+        currentFact = repository.getNextFact()
+        isFactLoading = false
+
+        isApodLoading = true
+        apodData = repository.fetchAstronomyPictureOfTheDay()
+        isApodLoading = false
+    }
+    
+    // Update favorites when returning to the screen
+    LaunchedEffect(favoritesManager) {
+        favoritePlanets = favoritesManager.getFavoritePlanets()
+        favoriteSatellites = favoritesManager.getFavoriteSatellites()
+    }
 
     Box(modifier = modifier.fillMaxSize()) {
         Column(
@@ -48,18 +94,50 @@ fun HomeScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 20.dp, vertical = 16.dp)
         ) {
-            // Welcome header
-            Text(
-                "Welcome to the Cosmos",
-                style = MaterialTheme.typography.headlineMedium,
-                color = StarWhite,
-                fontWeight = FontWeight.Bold
-            )
-            Text(
-                "Explore the wonders of our solar system and beyond",
-                style = MaterialTheme.typography.bodyMedium,
-                color = TextSecondary
-            )
+            // Welcome header row with animated Sync button
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        "Welcome to the Cosmos",
+                        style = MaterialTheme.typography.headlineMedium,
+                        color = StarWhite,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        "Explore the wonders of our solar system and beyond",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = TextSecondary
+                    )
+                }
+
+                IconButton(
+                    onClick = {
+                        rotationAngle += 360f
+                        scope.launch {
+                            isFactLoading = true
+                            currentFact = repository.getNextFact()
+                            isFactLoading = false
+
+                            isApodLoading = true
+                            apodData = repository.fetchAstronomyPictureOfTheDay()
+                            isApodLoading = false
+                            
+                            favoritePlanets = favoritesManager.getFavoritePlanets()
+                            favoriteSatellites = favoritesManager.getFavoriteSatellites()
+                        }
+                    }
+                ) {
+                    Icon(
+                        Icons.Default.Sync,
+                        contentDescription = "Sync Cosmos",
+                        tint = NeonPrimary,
+                        modifier = Modifier.size(24.dp).rotate(animatedRotation)
+                    )
+                }
+            }
 
             Spacer(Modifier.height(24.dp))
 
@@ -79,18 +157,26 @@ fun HomeScreen(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            "Discover Something Amazing",
+                            "Space Fact",
                             style = MaterialTheme.typography.titleMedium,
                             color = StarWhite,
                             fontWeight = FontWeight.Bold
                         )
                         Spacer(Modifier.height(8.dp))
-                        Text(
-                            currentFact,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = TextSecondary,
-                            lineHeight = 20.sp
-                        )
+                        if (isFactLoading) {
+                            CircularProgressIndicator(
+                                color = NeonPrimary,
+                                strokeWidth = 2.dp,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        } else {
+                            Text(
+                                currentFact,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = TextSecondary,
+                                lineHeight = 20.sp
+                            )
+                        }
                     }
                     Spacer(Modifier.width(12.dp))
                     Box(
@@ -98,7 +184,13 @@ fun HomeScreen(
                             .size(56.dp)
                             .clip(RoundedCornerShape(16.dp))
                             .background(NeonPrimary.copy(alpha = 0.3f))
-                            .clickable { currentFact = repository.getRandomFact() },
+                            .clickable(enabled = !isFactLoading) {
+                                scope.launch {
+                                    isFactLoading = true
+                                    currentFact = repository.getNextFact()
+                                    isFactLoading = false
+                                }
+                            },
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(Icons.Default.AutoAwesome, null, tint = NeonPrimary, modifier = Modifier.size(28.dp))
@@ -107,6 +199,91 @@ fun HomeScreen(
             }
 
             Spacer(Modifier.height(24.dp))
+
+            // Astronomy Picture of the Day (APOD) Section
+            if (isApodLoading) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(200.dp)
+                        .clip(RoundedCornerShape(20.dp))
+                        .background(SpaceSurface)
+                        .border(1.dp, SpaceBorder, RoundedCornerShape(20.dp)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        CircularProgressIndicator(color = NeonSecondary, modifier = Modifier.size(36.dp))
+                        Spacer(Modifier.height(10.dp))
+                        Text("Retrieving NASA Image...", style = MaterialTheme.typography.labelSmall, color = TextSecondary)
+                    }
+                }
+                Spacer(Modifier.height(24.dp))
+            } else {
+                apodData?.let { apod ->
+                    Text("Picture of the Day", style = MaterialTheme.typography.titleMedium, color = StarWhite, fontWeight = FontWeight.Bold)
+                    Spacer(Modifier.height(12.dp))
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(20.dp))
+                            .background(SpaceSurface)
+                            .border(1.dp, SpaceBorder, RoundedCornerShape(20.dp))
+                    ) {
+                        Column {
+                            AsyncImage(
+                                model = ImageRequest.Builder(LocalContext.current)
+                                    .data(apod.url)
+                                    .crossfade(true)
+                                    .build(),
+                                contentDescription = apod.title,
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(180.dp)
+                            )
+                            Column(modifier = Modifier.padding(16.dp)) {
+                                Text(
+                                    apod.title,
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = StarWhite,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Spacer(Modifier.height(2.dp))
+                                Text(
+                                    apod.date,
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = NeonSecondary
+                                )
+                                Spacer(Modifier.height(8.dp))
+                                Text(
+                                    apod.explanation,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = TextSecondary,
+                                    lineHeight = 16.sp,
+                                    maxLines = 4,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
+                        }
+                    }
+                    Spacer(Modifier.height(24.dp))
+                }
+            }
+            
+            if (favoritePlanets.isNotEmpty() || favoriteSatellites.isNotEmpty()) {
+                Text("Your Favorites", style = MaterialTheme.typography.titleMedium, color = StarWhite, fontWeight = FontWeight.Bold)
+                Spacer(Modifier.height(12.dp))
+                
+                Row(modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    favoritePlanets.forEach { planetName ->
+                        FavoriteChip(name = planetName, icon = Icons.Default.RocketLaunch, onClick = { onNavigateToPlanets() })
+                    }
+                    favoriteSatellites.forEach { satName ->
+                        FavoriteChip(name = satName, icon = Icons.Default.Satellite, onClick = { onNavigateToSatellites() })
+                    }
+                }
+                Spacer(Modifier.height(24.dp))
+            }
 
             // Section cards row
             Text("Explore", style = MaterialTheme.typography.titleMedium, color = StarWhite, fontWeight = FontWeight.Bold)
@@ -207,6 +384,24 @@ private fun StatBadge(value: String, label: String, accentColor: Color, modifier
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(value, fontSize = 24.sp, fontWeight = FontWeight.Bold, color = accentColor)
             Text(label, style = MaterialTheme.typography.labelSmall, color = TextSecondary)
+        }
+    }
+}
+
+@Composable
+private fun FavoriteChip(name: String, icon: ImageVector, onClick: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .clip(RoundedCornerShape(16.dp))
+            .background(SpaceSurface)
+            .border(1.dp, SpaceBorder, RoundedCornerShape(16.dp))
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 12.dp)
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(icon, null, tint = NeonPrimary, modifier = Modifier.size(16.dp))
+            Spacer(Modifier.width(8.dp))
+            Text(name, style = MaterialTheme.typography.bodyMedium, color = StarWhite, fontWeight = FontWeight.SemiBold)
         }
     }
 }

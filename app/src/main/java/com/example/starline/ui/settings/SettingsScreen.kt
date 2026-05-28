@@ -18,16 +18,26 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.starline.theme.*
+import androidx.compose.ui.platform.LocalContext
+import android.widget.Toast
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import com.example.starline.data.ApiKeyManager
 
 @Composable
 fun SettingsScreen(
     onBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
+    val apiKeyManager = remember { ApiKeyManager(context) }
+
     var notificationsEnabled by remember { mutableStateOf(true) }
     var darkMode by remember { mutableStateOf(true) }
     var autoPlay by remember { mutableStateOf(false) }
     var measurementSystem by remember { mutableStateOf("Metric") }
+
+    var nasaKeyInput by remember { mutableStateOf(if (apiKeyManager.isUsingDefaultNasaKey) "" else (apiKeyManager.customNasaKey ?: "")) }
+    var geminiKeyInput by remember { mutableStateOf(if (apiKeyManager.isUsingDefaultGeminiKey) "" else (apiKeyManager.customGeminiKey ?: "")) }
 
     Column(
         modifier = modifier
@@ -107,6 +117,108 @@ fun SettingsScreen(
                                 borderColor = SpaceBorder
                             )
                         )
+                    }
+                }
+            }
+        }
+
+        Spacer(Modifier.height(16.dp))
+
+        // API Credentials Section
+        SettingsSectionHeader("API Configuration")
+        SettingsCard {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text(
+                    "Customize credentials for real-world space telemetry and dynamic fact generation. If empty, Star Line securely uses default pre-baked keys.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = TextSecondary
+                )
+                Spacer(Modifier.height(12.dp))
+
+                OutlinedTextField(
+                    value = nasaKeyInput,
+                    onValueChange = { nasaKeyInput = it },
+                    label = { Text("NASA API Key") },
+                    placeholder = { Text("Using Secure Default Key") },
+                    visualTransformation = PasswordVisualTransformation(),
+                    singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = NeonPrimary,
+                        unfocusedBorderColor = SpaceBorder,
+                        focusedLabelColor = NeonPrimary,
+                        unfocusedLabelColor = TextSecondary,
+                        focusedTextColor = StarWhite,
+                        unfocusedTextColor = StarWhite
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(Modifier.height(8.dp))
+
+                OutlinedTextField(
+                    value = geminiKeyInput,
+                    onValueChange = { geminiKeyInput = it },
+                    label = { Text("Gemini API Key") },
+                    placeholder = { Text("Using Secure Default Key") },
+                    visualTransformation = PasswordVisualTransformation(),
+                    singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = NeonSecondary,
+                        unfocusedBorderColor = SpaceBorder,
+                        focusedLabelColor = NeonSecondary,
+                        unfocusedLabelColor = TextSecondary,
+                        focusedTextColor = StarWhite,
+                        unfocusedTextColor = StarWhite
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(Modifier.height(16.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Button(
+                        onClick = {
+                            if (nasaKeyInput.isNotBlank()) {
+                                apiKeyManager.customNasaKey = nasaKeyInput
+                            } else {
+                                apiKeyManager.resetNasaKey()
+                            }
+
+                            if (geminiKeyInput.isNotBlank()) {
+                                apiKeyManager.customGeminiKey = geminiKeyInput
+                            } else {
+                                apiKeyManager.resetGeminiKey()
+                            }
+
+                            Toast.makeText(context, "API Credentials Saved Successfully!", Toast.LENGTH_SHORT).show()
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = NeonPrimary),
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Icon(Icons.Default.Save, null, tint = StarWhite, modifier = Modifier.size(16.dp))
+                        Spacer(Modifier.width(6.dp))
+                        Text("Save Keys", color = StarWhite, fontWeight = FontWeight.Bold)
+                    }
+
+                    OutlinedButton(
+                        onClick = {
+                            apiKeyManager.resetNasaKey()
+                            apiKeyManager.resetGeminiKey()
+                            nasaKeyInput = ""
+                            geminiKeyInput = ""
+                            Toast.makeText(context, "Reset to secure default keys", Toast.LENGTH_SHORT).show()
+                        },
+                        border = ButtonDefaults.outlinedButtonBorder(true).copy(width = 1.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = TextSecondary)
+                    ) {
+                        Icon(Icons.Default.Refresh, null, modifier = Modifier.size(16.dp))
+                        Spacer(Modifier.width(6.dp))
+                        Text("Reset")
                     }
                 }
             }

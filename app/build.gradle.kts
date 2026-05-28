@@ -89,7 +89,11 @@ dependencies {
   implementation(platform(libs.firebase.bom))
   implementation(libs.firebase.auth)
   implementation(libs.firebase.messaging)
+  implementation(libs.firebase.database)
 
   // Material Icons Extended (for DarkMode, Settings, etc.)
   implementation(libs.androidx.compose.material.icons.extended)
+
+  // Coil (Async Image Loading)
+  implementation(libs.coil.compose)
 }

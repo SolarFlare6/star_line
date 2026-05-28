@@ -44,3 +44,11 @@ data class UserSession(
     val displayName: String,
     val isLoggedIn: Boolean
 )
+
+@Serializable
+data class ApodData(
+    val title: String,
+    val explanation: String,
+    val url: String,
+    val date: String
+)

@@ -10,8 +10,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -29,18 +28,33 @@ fun NewsScreen(
     modifier: Modifier = Modifier
 ) {
     val repository = remember { SpaceDataRepository() }
+    var newsList by remember { mutableStateOf(repository.news) }
+    var isLoading by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        isLoading = true
+        repository.fetchSpaceNews()
+        newsList = repository.news
+        isLoading = false
+    }
 
     Column(modifier = modifier.fillMaxSize().padding(horizontal = 16.dp, vertical = 16.dp)) {
         Text("Space News & Facts", style = MaterialTheme.typography.headlineMedium, color = StarWhite, fontWeight = FontWeight.Bold)
         Text("Latest discoveries and updates", style = MaterialTheme.typography.bodyMedium, color = TextSecondary)
         Spacer(Modifier.height(20.dp))
 
-        LazyColumn(
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-            contentPadding = PaddingValues(bottom = 80.dp)
-        ) {
-            items(repository.news) { article ->
-                NewsCard(article = article, onClick = { onNewsClick(article.id) })
+        if (isLoading) {
+            Box(modifier = Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator(color = NeonPrimary)
+            }
+        } else {
+            LazyColumn(
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                contentPadding = PaddingValues(bottom = 80.dp)
+            ) {
+                items(newsList) { article ->
+                    NewsCard(article = article, onClick = { onNewsClick(article.id) })
+                }
             }
         }
     }

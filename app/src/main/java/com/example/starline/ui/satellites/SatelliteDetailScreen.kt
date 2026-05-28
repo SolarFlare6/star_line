@@ -18,6 +18,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.runtime.*
 import com.example.starline.data.SpaceDataRepository
 import com.example.starline.theme.*
 
@@ -27,14 +29,29 @@ fun SatelliteDetailScreen(
     onBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val repository = remember { SpaceDataRepository() }
-    val satellite = remember(satelliteName) { repository.satellites.find { it.name == satelliteName } }
+    val context = LocalContext.current
+    val repository = remember(context) { SpaceDataRepository(context) }
+    val initialSatellite = remember(satelliteName) { repository.satellites.find { it.name == satelliteName } }
 
-    if (satellite == null) {
+    if (initialSatellite == null) {
         Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Text("Satellite not found", color = TextSecondary)
         }
         return
+    }
+
+    var satellite by remember { mutableStateOf(initialSatellite) }
+
+    if (satelliteName.equals("ISS", ignoreCase = true)) {
+        LaunchedEffect(Unit) {
+            while (true) {
+                val updated = repository.fetchIssTelemetry()
+                if (updated != null) {
+                    satellite = updated
+                }
+                kotlinx.coroutines.delay(10000) // 10 seconds telemetry polling loop
+            }
+        }
     }
 
     val statusColor = when {

@@ -9,10 +9,11 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -21,6 +22,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.starline.data.Satellite
+import com.example.starline.data.FavoritesManager
+import androidx.compose.ui.platform.LocalContext
 import com.example.starline.data.SpaceDataRepository
 import com.example.starline.theme.*
 
@@ -29,10 +32,25 @@ fun SatellitesScreen(
     onSatelliteClick: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val repository = remember { SpaceDataRepository() }
+    val context = LocalContext.current
+    val repository = remember(context) { SpaceDataRepository(context) }
+    var satellitesList by remember { mutableStateOf(repository.satellites) }
+    var isRefreshing by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        isRefreshing = true
+        repository.refreshSatellites()
+        satellitesList = repository.satellites
+        isRefreshing = false
+    }
 
     Column(modifier = modifier.fillMaxSize().padding(horizontal = 16.dp, vertical = 16.dp)) {
-        Text("Satellites & Missions", style = MaterialTheme.typography.headlineMedium, color = StarWhite, fontWeight = FontWeight.Bold)
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text("Satellites & Missions", style = MaterialTheme.typography.headlineMedium, color = StarWhite, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+            if (isRefreshing) {
+                CircularProgressIndicator(modifier = Modifier.size(24.dp), color = NeonSecondary, strokeWidth = 2.dp)
+            }
+        }
         Text("Track active space missions", style = MaterialTheme.typography.bodyMedium, color = TextSecondary)
         Spacer(Modifier.height(20.dp))
 
@@ -40,7 +58,7 @@ fun SatellitesScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp),
             contentPadding = PaddingValues(bottom = 80.dp)
         ) {
-            items(repository.satellites) { satellite ->
+            items(satellitesList) { satellite ->
                 SatelliteCard(satellite = satellite, onClick = { onSatelliteClick(satellite.name) })
             }
         }
@@ -49,6 +67,10 @@ fun SatellitesScreen(
 
 @Composable
 private fun SatelliteCard(satellite: Satellite, onClick: () -> Unit) {
+    val context = LocalContext.current
+    val favoritesManager = remember(context) { FavoritesManager(context) }
+    var isFavorite by remember { mutableStateOf(favoritesManager.isSatelliteFavorite(satellite.name)) }
+
     val statusColor = when {
         satellite.status.contains("Active", ignoreCase = true) -> GlowGreen
         satellite.status.contains("Operational", ignoreCase = true) -> NeonSecondary
@@ -100,6 +122,16 @@ private fun SatelliteCard(satellite: Satellite, onClick: () -> Unit) {
                 }
                 Spacer(Modifier.height(4.dp))
                 Text("Altitude: ${satellite.altitude}", style = MaterialTheme.typography.labelSmall, color = TextSecondary)
+            }
+
+            IconButton(
+                onClick = { isFavorite = favoritesManager.toggleSatelliteFavorite(satellite.name) }
+            ) {
+                Icon(
+                    if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                    contentDescription = "Favorite",
+                    tint = if (isFavorite) NeonPrimary else TextSecondary
+                )
             }
 
             Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, null, tint = TextSecondary)
