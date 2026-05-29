@@ -39,6 +39,8 @@ private val navItems = listOf(
 
 @Composable
 fun AppScaffold(
+    selectedTab: BottomTab,
+    onTabChange: (BottomTab) -> Unit,
     onNavigateToPlanetDetail: (String) -> Unit,
     onNavigateToSatelliteDetail: (String) -> Unit,
     onNavigateToNewsDetail: (String) -> Unit,
@@ -46,7 +48,6 @@ fun AppScaffold(
     onNavigateToSettings: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var selectedTab by remember { mutableStateOf(BottomTab.Home) }
 
     Box(modifier = modifier.fillMaxSize()) {
         StarfieldBackground()
@@ -108,9 +109,9 @@ fun AppScaffold(
             Box(modifier = Modifier.weight(1f)) {
                 when (selectedTab) {
                     BottomTab.Home -> HomeScreen(
-                        onNavigateToPlanets   = { selectedTab = BottomTab.Planets },
-                        onNavigateToSatellites = { selectedTab = BottomTab.Satellites },
-                        onNavigateToNews      = { selectedTab = BottomTab.News },
+                        onNavigateToPlanets   = { onTabChange(BottomTab.Planets) },
+                        onNavigateToSatellites = { onTabChange(BottomTab.Satellites) },
+                        onNavigateToNews      = { onTabChange(BottomTab.News) },
                         onNavigateToPlanetDetail = onNavigateToPlanetDetail,
                         onNavigateToSatelliteDetail = onNavigateToSatelliteDetail,
                         onNavigateToNewsDetail = onNavigateToNewsDetail
@@ -138,7 +139,7 @@ fun AppScaffold(
                         val tint = if (isSelected) NeonPrimary else TextSecondary
 
                         IconButton(
-                            onClick = { selectedTab = item.tab },
+                            onClick = { onTabChange(item.tab) },
                             modifier = Modifier.weight(1f)
                         ) {
                             Column(

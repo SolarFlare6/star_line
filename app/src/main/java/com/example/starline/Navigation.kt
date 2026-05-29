@@ -1,5 +1,6 @@
 package com.example.starline
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -14,6 +15,7 @@ import com.example.starline.ui.auth.AuthViewModel
 import com.example.starline.ui.auth.LoginScreen
 import com.example.starline.ui.auth.RegisterScreen
 import com.example.starline.ui.main.AppScaffold
+import com.example.starline.ui.main.BottomTab
 import com.example.starline.ui.planets.PlanetDetailScreen
 import com.example.starline.ui.satellites.SatelliteDetailScreen
 import com.example.starline.ui.news.NewsDetailScreen
@@ -28,7 +30,8 @@ data class AppState(
     val route: AppRoute = AppRoute.Login,
     val planetName: String = "",
     val satelliteName: String = "",
-    val newsId: String = ""
+    val newsId: String = "",
+    val selectedTab: BottomTab = BottomTab.Home
 )
 
 @Composable
@@ -56,6 +59,31 @@ fun MainNavigation() {
         }
     }
 
+    // ── Back-press handler ───────────────────────────────────────────────
+    // Enabled whenever the system back should do something other than close the app.
+    val backEnabled = when (appState.route) {
+        AppRoute.Login -> false                                   // let system handle (exit)
+        AppRoute.Register -> true                                  // go back to Login
+        AppRoute.Main -> appState.selectedTab != BottomTab.Home   // non-Home tab → go to Home
+        else -> true                                               // detail / profile / settings
+    }
+
+    BackHandler(enabled = backEnabled) {
+        when (appState.route) {
+            AppRoute.Register ->
+                appState = appState.copy(route = AppRoute.Login)
+            AppRoute.Main ->
+                appState = appState.copy(selectedTab = BottomTab.Home)
+            AppRoute.PlanetDetail,
+            AppRoute.SatelliteDetail,
+            AppRoute.NewsDetail,
+            AppRoute.Profile,
+            AppRoute.Settings ->
+                appState = appState.copy(route = AppRoute.Main)
+            else -> Unit
+        }
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -75,6 +103,8 @@ fun MainNavigation() {
             )
 
             AppRoute.Main -> AppScaffold(
+                selectedTab = appState.selectedTab,
+                onTabChange = { tab -> appState = appState.copy(selectedTab = tab) },
                 onNavigateToPlanetDetail = { name ->
                     appState = appState.copy(route = AppRoute.PlanetDetail, planetName = name)
                 },
