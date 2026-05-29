@@ -1,5 +1,6 @@
 package com.example.starline.ui.satellites
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -36,6 +37,9 @@ fun SatelliteDetailScreen(
     val repository = remember(context) { SpaceDataRepository(context) }
     val settingsManager = remember(context) { SettingsManager(context) }
     val initialSatellite = remember(satelliteName) { repository.satellites.find { it.name == satelliteName } }
+
+    // Intercept system back button
+    BackHandler { onBack() }
 
     if (initialSatellite == null) {
         Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) {

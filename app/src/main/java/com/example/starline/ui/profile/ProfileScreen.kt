@@ -1,5 +1,6 @@
 package com.example.starline.ui.profile
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -36,6 +37,9 @@ fun ProfileScreen(
 ) {
     val currentUser by viewModel.currentUser.collectAsState()
     var showLogoutDialog by remember { mutableStateOf(false) }
+
+    // Intercept system back button
+    BackHandler { onBack() }
 
     if (showLogoutDialog) {
         AlertDialog(

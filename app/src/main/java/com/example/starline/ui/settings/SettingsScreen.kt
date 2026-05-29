@@ -1,5 +1,6 @@
 package com.example.starline.ui.settings
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -39,6 +40,9 @@ fun SettingsScreen(
 
     var nasaKeyInput by remember { mutableStateOf(if (apiKeyManager.isUsingDefaultNasaKey) "" else (apiKeyManager.customNasaKey ?: "")) }
     var geminiKeyInput by remember { mutableStateOf(if (apiKeyManager.isUsingDefaultGeminiKey) "" else (apiKeyManager.customGeminiKey ?: "")) }
+
+    // Intercept system back button
+    BackHandler { onBack() }
 
     Column(
         modifier = modifier

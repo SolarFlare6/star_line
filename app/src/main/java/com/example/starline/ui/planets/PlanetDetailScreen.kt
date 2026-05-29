@@ -1,5 +1,6 @@
 package com.example.starline.ui.planets
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -39,6 +40,9 @@ fun PlanetDetailScreen(
     val repository = remember(context) { SpaceDataRepository(context) }
     val settingsManager = remember(context) { SettingsManager(context) }
     var planet by remember { mutableStateOf(repository.planets.find { it.name == planetName }) }
+
+    // Intercept system back button
+    BackHandler { onBack() }
 
     var nasaMedia by remember { mutableStateOf<NasaMediaData?>(null) }
     var isLoadingNasaMedia by remember { mutableStateOf(true) }

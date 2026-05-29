@@ -1,5 +1,6 @@
 package com.example.starline.ui.news
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -44,6 +45,9 @@ fun NewsDetailScreen(
     val clipboardManager = LocalClipboardManager.current
 
     var isFavorite by remember(newsId) { mutableStateOf(favoritesManager.isArticleFavorite(newsId)) }
+
+    // Intercept system back button
+    BackHandler { onBack() }
 
     if (article == null) {
         Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
