@@ -126,12 +126,28 @@ class FavoritesManager(private val context: Context) {
         val dbRef = database
         if (uid != null && dbRef != null) {
             try {
-                dbRef.getReference("users")
+                val safeId = safeFirebaseKey(article.id)
+                val articleRef = dbRef.getReference("users")
                     .child(uid)
                     .child("favorites")
                     .child("articles")
-                    .child(article.id)
-                    .setValue(if (isFav) article.title else null)
+                    .child(safeId)
+                if (isFav) {
+                    val articleMap = mapOf(
+                        "id" to article.id,
+                        "title" to article.title,
+                        "category" to article.category,
+                        "date" to article.date,
+                        "summary" to article.summary,
+                        "fullText" to article.fullText,
+                        "readTime" to article.readTime,
+                        "url" to article.url,
+                        "imageUrl" to article.imageUrl
+                    )
+                    articleRef.setValue(articleMap)
+                } else {
+                    articleRef.setValue(null)
+                }
             } catch (e: Exception) {
                 e.printStackTrace()
             }
@@ -225,26 +241,47 @@ class FavoritesManager(private val context: Context) {
 
                 // 3. Sync Articles
                 val articlesSnapshot = snapshot.child("articles")
-                val fbArticles = if (articlesSnapshot.exists()) {
-                    articlesSnapshot.children.associate { (it.key ?: "") to (it.value as? String ?: "") }
-                } else {
-                    emptyMap()
+                val fbArticleIds = mutableSetOf<String>()
+
+                if (articlesSnapshot.exists()) {
+                    articlesSnapshot.children.forEach { articleSnap ->
+                        val safeId = articleSnap.key ?: return@forEach
+                        val rawId = if (articleSnap.value is Map<*, *>) {
+                            val map = articleSnap.value as Map<*, *>
+                            (map["id"] as? String) ?: safeId
+                        } else {
+                            safeId
+                        }
+                        
+                        if (rawId.isNotEmpty()) {
+                            fbArticleIds.add(rawId)
+                            editor.putBoolean("${uid}_article_fav_$rawId", true)
+
+                            if (articleSnap.value is Map<*, *>) {
+                                val map = articleSnap.value as Map<*, *>
+                                editor.putString("${uid}_article_title_$rawId", (map["title"] as? String) ?: "")
+                                editor.putString("${uid}_article_category_$rawId", (map["category"] as? String) ?: "News")
+                                editor.putString("${uid}_article_date_$rawId", (map["date"] as? String) ?: "")
+                                editor.putString("${uid}_article_summary_$rawId", (map["summary"] as? String) ?: "")
+                                editor.putString("${uid}_article_fullText_$rawId", (map["fullText"] as? String) ?: "")
+                                editor.putString("${uid}_article_readTime_$rawId", (map["readTime"] as? String) ?: "2 min read")
+                                editor.putString("${uid}_article_url_$rawId", (map["url"] as? String) ?: "")
+                                editor.putString("${uid}_article_imageUrl_$rawId", (map["imageUrl"] as? String) ?: "")
+                            } else {
+                                val title = articleSnap.value as? String ?: ""
+                                val titleKey = "${uid}_article_title_$rawId"
+                                if (!sharedPrefs.contains(titleKey)) {
+                                    editor.putString(titleKey, title)
+                                }
+                            }
+                        }
+                    }
                 }
 
                 // Clear local article favorites not in Firebase
                 getFavoriteArticleIds().forEach { articleId ->
-                    if (!fbArticles.containsKey(articleId)) {
+                    if (!fbArticleIds.contains(articleId)) {
                         editor.putBoolean("${uid}_article_fav_$articleId", false)
-                    }
-                }
-                // Set Firebase article favorites to true locally
-                fbArticles.forEach { (articleId, title) ->
-                    if (articleId.isNotEmpty()) {
-                        editor.putBoolean("${uid}_article_fav_$articleId", true)
-                        val titleKey = "${uid}_article_title_$articleId"
-                        if (!sharedPrefs.contains(titleKey)) {
-                            editor.putString(titleKey, title)
-                        }
                     }
                 }
 
@@ -263,5 +300,9 @@ class FavoritesManager(private val context: Context) {
             e.printStackTrace()
             false
         }
+    }
+
+    private fun safeFirebaseKey(key: String): String {
+        return key.replace(Regex("[.#$\\[\\]/]"), "_")
     }
 }
