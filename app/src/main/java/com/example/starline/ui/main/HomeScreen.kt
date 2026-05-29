@@ -86,11 +86,18 @@ fun HomeScreen(
         isApodLoading = false
     }
     
-    // Update favorites when returning to the screen
+    // Update favorites when returning to the screen and sync from Firebase
     LaunchedEffect(favoritesManager) {
         favoritePlanets = favoritesManager.getFavoritePlanets()
         favoriteSatellites = favoritesManager.getFavoriteSatellites()
         favoriteArticles = favoritesManager.getFavoriteArticles()
+
+        val synced = favoritesManager.syncFromFirebase()
+        if (synced) {
+            favoritePlanets = favoritesManager.getFavoritePlanets()
+            favoriteSatellites = favoritesManager.getFavoriteSatellites()
+            favoriteArticles = favoritesManager.getFavoriteArticles()
+        }
     }
 
     Box(modifier = modifier.fillMaxSize()) {
@@ -131,6 +138,8 @@ fun HomeScreen(
                             apodData = repository.fetchAstronomyPictureOfTheDay()
                             isApodLoading = false
                             
+                            favoritesManager.syncFromFirebase()
+
                             favoritePlanets = favoritesManager.getFavoritePlanets()
                             favoriteSatellites = favoritesManager.getFavoriteSatellites()
                             favoriteArticles = favoritesManager.getFavoriteArticles()

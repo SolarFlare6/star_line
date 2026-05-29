@@ -107,20 +107,18 @@ private fun SatelliteCard(satellite: Satellite, onClick: () -> Unit) {
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(satellite.name, style = MaterialTheme.typography.titleMedium, color = StarWhite, fontWeight = FontWeight.SemiBold)
-                Spacer(Modifier.height(2.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(6.dp))
-                            .background(statusColor.copy(alpha = 0.2f))
-                            .padding(horizontal = 8.dp, vertical = 2.dp)
-                    ) {
-                        Text(satellite.status, style = MaterialTheme.typography.labelSmall, color = statusColor, fontSize = 10.sp)
-                    }
-                    Spacer(Modifier.width(8.dp))
-                    Text(satellite.missionType, style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+                Spacer(Modifier.height(4.dp))
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(6.dp))
+                        .background(statusColor.copy(alpha = 0.2f))
+                        .padding(horizontal = 8.dp, vertical = 2.dp)
+                ) {
+                    Text(satellite.status, style = MaterialTheme.typography.labelSmall, color = statusColor, fontSize = 10.sp)
                 }
                 Spacer(Modifier.height(4.dp))
+                Text(satellite.missionType, style = MaterialTheme.typography.bodySmall, color = TextSecondary, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+                Spacer(Modifier.height(2.dp))
                 Text("Altitude: ${satellite.altitude}", style = MaterialTheme.typography.labelSmall, color = TextSecondary)
             }
 

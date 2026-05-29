@@ -156,7 +156,7 @@ fun PlanetDetailScreen(
                 Column(modifier = Modifier.weight(1f)) {
                     Text(activePlanet.name, style = MaterialTheme.typography.headlineMedium, color = StarWhite, fontWeight = FontWeight.Bold)
                     Spacer(Modifier.height(4.dp))
-                    Text(activePlanet.description.take(80) + "...", style = MaterialTheme.typography.bodySmall, color = TextSecondary, lineHeight = 16.sp)
+                    Text(activePlanet.type, style = MaterialTheme.typography.bodySmall, color = TextSecondary, lineHeight = 16.sp)
                 }
             }
         }

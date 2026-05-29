@@ -33,7 +33,6 @@ fun SettingsScreen(
 
     var notificationsEnabled by remember { mutableStateOf(true) }
     var darkMode by remember { mutableStateOf(true) }
-    var autoPlay by remember { mutableStateOf(false) }
     var measurementSystem by remember { mutableStateOf("Metric") }
 
     var nasaKeyInput by remember { mutableStateOf(if (apiKeyManager.isUsingDefaultNasaKey) "" else (apiKeyManager.customNasaKey ?: "")) }
@@ -66,14 +65,6 @@ fun SettingsScreen(
                 subtitle = "Get alerts about space events",
                 checked = notificationsEnabled,
                 onCheckedChange = { notificationsEnabled = it }
-            )
-            SettingsDivider()
-            SettingsToggleRow(
-                icon = Icons.Default.PlayArrow,
-                title = "Auto-Play Updates",
-                subtitle = "Automatically load new content",
-                checked = autoPlay,
-                onCheckedChange = { autoPlay = it }
             )
         }
 
@@ -296,7 +287,9 @@ private fun SettingsToggleRow(
             colors = SwitchDefaults.colors(
                 checkedThumbColor = StarWhite,
                 checkedTrackColor = NeonPrimary,
-                uncheckedTrackColor = SpaceBorder
+                uncheckedThumbColor = StarWhite,
+                uncheckedTrackColor = SpaceBorder.copy(alpha = 0.6f),
+                uncheckedBorderColor = SpaceBorder
             )
         )
     }
