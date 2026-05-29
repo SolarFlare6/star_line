@@ -112,7 +112,8 @@ fun AppScaffold(
                         onNavigateToSatellites = { selectedTab = BottomTab.Satellites },
                         onNavigateToNews      = { selectedTab = BottomTab.News },
                         onNavigateToPlanetDetail = onNavigateToPlanetDetail,
-                        onNavigateToSatelliteDetail = onNavigateToSatelliteDetail
+                        onNavigateToSatelliteDetail = onNavigateToSatelliteDetail,
+                        onNavigateToNewsDetail = onNavigateToNewsDetail
                     )
                     BottomTab.Planets    -> PlanetariumScreen(onPlanetClick = onNavigateToPlanetDetail)
                     BottomTab.Satellites -> SatellitesScreen(onSatelliteClick = onNavigateToSatelliteDetail)

@@ -8,10 +8,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Bookmark
+import androidx.compose.material.icons.filled.BookmarkBorder
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -21,6 +22,7 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.starline.data.FavoritesManager
 import com.example.starline.data.SpaceDataRepository
 import com.example.starline.theme.*
 
@@ -30,10 +32,18 @@ fun NewsDetailScreen(
     onBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val repository = remember { SpaceDataRepository() }
-    val article = remember(newsId) { repository.news.find { it.id == newsId } }
-    val clipboardManager = LocalClipboardManager.current
     val context = LocalContext.current
+    val repository = remember { SpaceDataRepository(context) }
+    val favoritesManager = remember { FavoritesManager(context) }
+
+    // First look in the live newsList; if not found, fall back to cached article
+    val liveArticle = remember(newsId) { repository.news.find { it.id == newsId } }
+    val cachedArticle = remember(newsId) { favoritesManager.getCachedArticle(newsId) }
+    val article = liveArticle ?: cachedArticle
+
+    val clipboardManager = LocalClipboardManager.current
+
+    var isFavorite by remember(newsId) { mutableStateOf(favoritesManager.isArticleFavorite(newsId)) }
 
     if (article == null) {
         Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -64,6 +74,21 @@ fun NewsDetailScreen(
             }
             Text("Back to news", style = MaterialTheme.typography.bodyMedium, color = TextSecondary)
             Spacer(Modifier.weight(1f))
+
+            // Bookmark / favorite button
+            IconButton(onClick = {
+                isFavorite = favoritesManager.toggleArticleFavorite(article)
+                val msg = if (isFavorite) "Article saved to favorites" else "Removed from favorites"
+                android.widget.Toast.makeText(context, msg, android.widget.Toast.LENGTH_SHORT).show()
+            }) {
+                Icon(
+                    imageVector = if (isFavorite) Icons.Default.Bookmark else Icons.Default.BookmarkBorder,
+                    contentDescription = if (isFavorite) "Remove from favorites" else "Save to favorites",
+                    tint = if (isFavorite) NeonPrimary else StarWhite
+                )
+            }
+
+            // Copy URL button
             if (article.url.isNotBlank()) {
                 IconButton(onClick = {
                     clipboardManager.setText(AnnotatedString(article.url))

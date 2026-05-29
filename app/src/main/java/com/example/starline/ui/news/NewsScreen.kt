@@ -27,7 +27,8 @@ fun NewsScreen(
     onNewsClick: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val repository = remember { SpaceDataRepository() }
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val repository = remember(context) { SpaceDataRepository(context) }
     var newsList by remember { mutableStateOf(repository.news) }
     var isLoading by remember { mutableStateOf(false) }
 

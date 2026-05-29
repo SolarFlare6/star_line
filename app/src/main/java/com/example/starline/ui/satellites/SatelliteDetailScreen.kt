@@ -252,6 +252,43 @@ fun SatelliteDetailScreen(
             }
         }
 
+        // NASA Media Collage
+        if (nasaMedia?.collageUrls?.isNotEmpty() == true) {
+            Spacer(Modifier.height(24.dp))
+            Text(
+                "NASA Image Collage",
+                style = MaterialTheme.typography.titleMedium,
+                color = StarWhite,
+                fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+            )
+            Spacer(Modifier.height(12.dp))
+
+            val urls = nasaMedia!!.collageUrls
+            urls.chunked(2).forEach { rowUrls ->
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    for (url in rowUrls) {
+                        AsyncImage(
+                            model = url,
+                            contentDescription = "NASA Collage Image",
+                            contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(120.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .border(1.dp, SpaceBorder, RoundedCornerShape(12.dp))
+                        )
+                    }
+                    if (rowUrls.size == 1) {
+                        Spacer(modifier = Modifier.weight(1f))
+                    }
+                }
+                Spacer(Modifier.height(8.dp))
+            }
+        }
+
         Spacer(Modifier.height(80.dp))
     }
 }

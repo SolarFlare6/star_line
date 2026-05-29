@@ -13,6 +13,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Newspaper
 import androidx.compose.material.icons.filled.RocketLaunch
@@ -50,6 +51,7 @@ fun HomeScreen(
     onNavigateToNews: () -> Unit,
     onNavigateToPlanetDetail: (String) -> Unit,
     onNavigateToSatelliteDetail: (String) -> Unit,
+    onNavigateToNewsDetail: (String) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -65,6 +67,7 @@ fun HomeScreen(
     val favoritesManager = remember(context) { FavoritesManager(context) }
     var favoritePlanets by remember { mutableStateOf(favoritesManager.getFavoritePlanets()) }
     var favoriteSatellites by remember { mutableStateOf(favoritesManager.getFavoriteSatellites()) }
+    var favoriteArticles by remember { mutableStateOf(favoritesManager.getFavoriteArticles()) }
 
     var rotationAngle by remember { mutableStateOf(0f) }
     val animatedRotation by animateFloatAsState(
@@ -87,6 +90,7 @@ fun HomeScreen(
     LaunchedEffect(favoritesManager) {
         favoritePlanets = favoritesManager.getFavoritePlanets()
         favoriteSatellites = favoritesManager.getFavoriteSatellites()
+        favoriteArticles = favoritesManager.getFavoriteArticles()
     }
 
     Box(modifier = modifier.fillMaxSize()) {
@@ -129,6 +133,7 @@ fun HomeScreen(
                             
                             favoritePlanets = favoritesManager.getFavoritePlanets()
                             favoriteSatellites = favoritesManager.getFavoriteSatellites()
+                            favoriteArticles = favoritesManager.getFavoriteArticles()
                         }
                     }
                 ) {
@@ -272,7 +277,7 @@ fun HomeScreen(
                 }
             }
             
-            if (favoritePlanets.isNotEmpty() || favoriteSatellites.isNotEmpty()) {
+            if (favoritePlanets.isNotEmpty() || favoriteSatellites.isNotEmpty() || favoriteArticles.isNotEmpty()) {
                 Text("Your Favorites", style = MaterialTheme.typography.titleMedium, color = StarWhite, fontWeight = FontWeight.Bold)
                 Spacer(Modifier.height(12.dp))
                 
@@ -282,6 +287,14 @@ fun HomeScreen(
                     }
                     favoriteSatellites.forEach { satName ->
                         FavoriteChip(name = satName, icon = Icons.Default.Satellite, onClick = { onNavigateToSatelliteDetail(satName) })
+                    }
+                    favoriteArticles.forEach { article ->
+                        FavoriteChip(
+                            name = article.title.take(28) + if (article.title.length > 28) "…" else "",
+                            icon = Icons.Default.Bookmark,
+                            accentColor = NeonTertiary,
+                            onClick = { onNavigateToNewsDetail(article.id) }
+                        )
                     }
                 }
                 Spacer(Modifier.height(24.dp))
@@ -391,7 +404,12 @@ private fun StatBadge(value: String, label: String, accentColor: Color, modifier
 }
 
 @Composable
-private fun FavoriteChip(name: String, icon: ImageVector, onClick: () -> Unit) {
+private fun FavoriteChip(
+    name: String,
+    icon: ImageVector,
+    onClick: () -> Unit,
+    accentColor: Color = NeonPrimary
+) {
     Box(
         modifier = Modifier
             .clip(RoundedCornerShape(16.dp))
@@ -401,7 +419,7 @@ private fun FavoriteChip(name: String, icon: ImageVector, onClick: () -> Unit) {
             .padding(horizontal = 16.dp, vertical = 12.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(icon, null, tint = NeonPrimary, modifier = Modifier.size(16.dp))
+            Icon(icon, null, tint = accentColor, modifier = Modifier.size(16.dp))
             Spacer(Modifier.width(8.dp))
             Text(name, style = MaterialTheme.typography.bodyMedium, color = StarWhite, fontWeight = FontWeight.SemiBold)
         }
