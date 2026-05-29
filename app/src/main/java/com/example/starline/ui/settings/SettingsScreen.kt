@@ -22,6 +22,7 @@ import androidx.compose.ui.platform.LocalContext
 import android.widget.Toast
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import com.example.starline.data.ApiKeyManager
+import com.example.starline.data.SettingsManager
 
 @Composable
 fun SettingsScreen(
@@ -30,10 +31,11 @@ fun SettingsScreen(
 ) {
     val context = LocalContext.current
     val apiKeyManager = remember { ApiKeyManager(context) }
+    val settingsManager = remember(context) { SettingsManager(context) }
 
     var notificationsEnabled by remember { mutableStateOf(true) }
     var darkMode by remember { mutableStateOf(true) }
-    var measurementSystem by remember { mutableStateOf("Metric") }
+    var measurementSystem by remember { mutableStateOf(settingsManager.measurementSystem) }
 
     var nasaKeyInput by remember { mutableStateOf(if (apiKeyManager.isUsingDefaultNasaKey) "" else (apiKeyManager.customNasaKey ?: "")) }
     var geminiKeyInput by remember { mutableStateOf(if (apiKeyManager.isUsingDefaultGeminiKey) "" else (apiKeyManager.customGeminiKey ?: "")) }
@@ -93,7 +95,10 @@ fun SettingsScreen(
                         val isSelected = measurementSystem == system
                         FilterChip(
                             selected = isSelected,
-                            onClick = { measurementSystem = system },
+                            onClick = {
+                                measurementSystem = system
+                                settingsManager.updateMeasurementSystem(system)
+                            },
                             label = { Text(system) },
                             colors = FilterChipDefaults.filterChipColors(
                                 selectedContainerColor = NeonSecondary.copy(alpha = 0.2f),

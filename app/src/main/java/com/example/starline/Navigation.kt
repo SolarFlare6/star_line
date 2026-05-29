@@ -8,6 +8,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.starline.data.FavoritesManager
+import com.example.starline.data.SettingsManager
 import com.example.starline.theme.SpaceBackground
 import com.example.starline.ui.auth.AuthViewModel
 import com.example.starline.ui.auth.LoginScreen
@@ -34,6 +35,7 @@ data class AppState(
 fun MainNavigation() {
     val context = LocalContext.current
     val favoritesManager = remember(context) { FavoritesManager(context) }
+    val settingsManager = remember(context) { SettingsManager(context) }
 
     val authViewModel: AuthViewModel = viewModel()
     val currentUser by authViewModel.currentUser.collectAsState()
@@ -43,10 +45,11 @@ fun MainNavigation() {
         mutableStateOf(AppState(route = if (currentUser != null) AppRoute.Main else AppRoute.Login))
     }
 
-    // If user becomes authenticated (e.g. persistent session), jump to Main and sync favorites
+    // If user becomes authenticated (e.g. persistent session), jump to Main and sync favorites and settings
     LaunchedEffect(currentUser) {
         if (currentUser != null) {
             favoritesManager.syncFromFirebase()
+            settingsManager.syncFromFirebase()
             if (appState.route in listOf(AppRoute.Login, AppRoute.Register)) {
                 appState = appState.copy(route = AppRoute.Main)
             }

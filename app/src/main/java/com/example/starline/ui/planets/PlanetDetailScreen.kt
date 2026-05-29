@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.platform.LocalContext
 import com.example.starline.data.SpaceDataRepository
+import com.example.starline.data.SettingsManager
 import com.example.starline.theme.*
 
 @Composable
@@ -36,6 +37,7 @@ fun PlanetDetailScreen(
 ) {
     val context = LocalContext.current
     val repository = remember(context) { SpaceDataRepository(context) }
+    val settingsManager = remember(context) { SettingsManager(context) }
     var planet by remember { mutableStateOf(repository.planets.find { it.name == planetName }) }
 
     var nasaMedia by remember { mutableStateOf<NasaMediaData?>(null) }
@@ -166,11 +168,11 @@ fun PlanetDetailScreen(
         // Stats grid
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             DetailStatCard("Type", activePlanet.type, Modifier.weight(1f))
-            DetailStatCard("Distance from Sun", activePlanet.distance, Modifier.weight(1f))
+            DetailStatCard("Distance from Sun", settingsManager.formatText(activePlanet.distance), Modifier.weight(1f))
         }
         Spacer(Modifier.height(12.dp))
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            DetailStatCard("Diameter", activePlanet.diameter, Modifier.weight(1f))
+            DetailStatCard("Diameter", settingsManager.formatText(activePlanet.diameter), Modifier.weight(1f))
             DetailStatCard("Moons", "${activePlanet.moons}", Modifier.weight(1f))
         }
         Spacer(Modifier.height(12.dp))
@@ -191,7 +193,7 @@ fun PlanetDetailScreen(
                 .border(1.dp, SpaceBorder, RoundedCornerShape(16.dp))
                 .padding(16.dp)
         ) {
-            Text(activePlanet.description, style = MaterialTheme.typography.bodyMedium, color = TextSecondary, lineHeight = 22.sp)
+            Text(settingsManager.formatText(activePlanet.description), style = MaterialTheme.typography.bodyMedium, color = TextSecondary, lineHeight = 22.sp)
         }
 
         // NASA Archives Log Section

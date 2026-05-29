@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.sp
 import com.example.starline.data.Planet
 import com.example.starline.data.SpaceDataRepository
 import com.example.starline.data.FavoritesManager
+import com.example.starline.data.SettingsManager
 import com.example.starline.theme.*
 import kotlinx.coroutines.launch
 
@@ -121,6 +122,7 @@ fun PlanetariumScreen(
 private fun PlanetCard(planet: Planet, onClick: () -> Unit) {
     val context = LocalContext.current
     val favoritesManager = remember(context) { FavoritesManager(context) }
+    val settingsManager = remember(context) { SettingsManager(context) }
     var isFavorite by remember { mutableStateOf(favoritesManager.isPlanetFavorite(planet.name)) }
 
     val primaryColor = remember(planet.primaryColorHex) { Color(android.graphics.Color.parseColor(planet.primaryColorHex)) }
@@ -147,7 +149,7 @@ private fun PlanetCard(planet: Planet, onClick: () -> Unit) {
             Text(planet.name, style = MaterialTheme.typography.titleMedium, color = StarWhite, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center)
             Text(planet.type, style = MaterialTheme.typography.bodySmall, color = TextSecondary)
             Spacer(Modifier.height(8.dp))
-            Text("Distance: ${planet.distance}", style = MaterialTheme.typography.labelSmall, color = TextSecondary)
+            Text("Distance: ${settingsManager.formatText(planet.distance)}", style = MaterialTheme.typography.labelSmall, color = TextSecondary)
             Text("Moons: ${planet.moons}", style = MaterialTheme.typography.labelSmall, color = TextSecondary)
         }
         

@@ -351,7 +351,7 @@ fun HomeScreen(
 
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 StatBadge("8", "Planets", NeonPrimary, Modifier.weight(1f))
-                StatBadge("6", "Missions", NeonSecondary, Modifier.weight(1f))
+                StatBadge("6", "Satellites", NeonSecondary, Modifier.weight(1f))
                 StatBadge("30+", "Facts", NeonTertiary, Modifier.weight(1f))
             }
 

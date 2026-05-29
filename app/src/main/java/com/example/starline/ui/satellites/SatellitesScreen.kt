@@ -25,6 +25,7 @@ import com.example.starline.data.Satellite
 import com.example.starline.data.FavoritesManager
 import androidx.compose.ui.platform.LocalContext
 import com.example.starline.data.SpaceDataRepository
+import com.example.starline.data.SettingsManager
 import com.example.starline.theme.*
 
 @Composable
@@ -69,6 +70,7 @@ fun SatellitesScreen(
 private fun SatelliteCard(satellite: Satellite, onClick: () -> Unit) {
     val context = LocalContext.current
     val favoritesManager = remember(context) { FavoritesManager(context) }
+    val settingsManager = remember(context) { SettingsManager(context) }
     var isFavorite by remember { mutableStateOf(favoritesManager.isSatelliteFavorite(satellite.name)) }
 
     val statusColor = when {
@@ -119,7 +121,7 @@ private fun SatelliteCard(satellite: Satellite, onClick: () -> Unit) {
                 Spacer(Modifier.height(4.dp))
                 Text(satellite.missionType, style = MaterialTheme.typography.bodySmall, color = TextSecondary, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
                 Spacer(Modifier.height(2.dp))
-                Text("Altitude: ${satellite.altitude}", style = MaterialTheme.typography.labelSmall, color = TextSecondary)
+                Text("Altitude: ${settingsManager.formatText(satellite.altitude)}", style = MaterialTheme.typography.labelSmall, color = TextSecondary)
             }
 
             IconButton(

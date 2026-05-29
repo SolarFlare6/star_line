@@ -23,6 +23,7 @@ import androidx.compose.runtime.*
 import com.example.starline.data.SpaceDataRepository
 import com.example.starline.data.NasaMediaData
 import coil.compose.AsyncImage
+import com.example.starline.data.SettingsManager
 import com.example.starline.theme.*
 
 @Composable
@@ -33,6 +34,7 @@ fun SatelliteDetailScreen(
 ) {
     val context = LocalContext.current
     val repository = remember(context) { SpaceDataRepository(context) }
+    val settingsManager = remember(context) { SettingsManager(context) }
     val initialSatellite = remember(satelliteName) { repository.satellites.find { it.name == satelliteName } }
 
     if (initialSatellite == null) {
@@ -173,7 +175,7 @@ fun SatelliteDetailScreen(
         }
         Spacer(Modifier.height(12.dp))
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            SatDetailCard("Altitude", satellite.altitude, Modifier.weight(1f))
+            SatDetailCard("Altitude", settingsManager.formatText(satellite.altitude), Modifier.weight(1f))
             SatDetailCard("Status", satellite.status, Modifier.weight(1f))
         }
 
@@ -206,7 +208,7 @@ fun SatelliteDetailScreen(
                 .border(1.dp, SpaceBorder, RoundedCornerShape(16.dp))
                 .padding(16.dp)
         ) {
-            Text(satellite.description, style = MaterialTheme.typography.bodyMedium, color = TextSecondary, lineHeight = 22.sp)
+            Text(settingsManager.formatText(satellite.description), style = MaterialTheme.typography.bodyMedium, color = TextSecondary, lineHeight = 22.sp)
         }
 
         // NASA Archives Log Section
