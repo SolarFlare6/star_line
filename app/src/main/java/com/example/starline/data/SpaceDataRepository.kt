@@ -478,29 +478,21 @@ class SpaceDataRepository(private val context: Context? = null) {
                     }
                 }
                 val json = JSONObject(response)
-                ApodData(
+                val apod = ApodData(
                     title = json.optString("title", "Deep Space Discovery"),
                     explanation = json.optString("explanation", "Exploring the mysteries of the universe, one light year at a time."),
                     url = json.optString("url", "https://images-assets.nasa.gov/image/PIA04921/PIA04921~orig.jpg"),
                     date = json.optString("date", "2026-05-28")
                 )
+                saveApodCache(apod)
+                apod
             } else {
                 Log.e("StarLineNASA", "API error code: $responseCode")
-                ApodData(
-                    title = "The Majestic Andromeda Galaxy",
-                    explanation = "Andromeda is the nearest major galaxy to our Milky Way, containing over a trillion stars and spiraling dramatically through the local group. This fallback image is active due to rate-limiting or network status.",
-                    url = "https://images-assets.nasa.gov/image/PIA04921/PIA04921~orig.jpg",
-                    date = "2026-05-28"
-                )
+                loadApodCache()
             }
         } catch (e: Exception) {
             e.printStackTrace()
-            ApodData(
-                title = "The Majestic Andromeda Galaxy",
-                explanation = "Andromeda is the nearest major galaxy to our Milky Way, containing over a trillion stars and spiraling dramatically through the local group. This fallback image is active due to rate-limiting or network status.",
-                url = "https://images-assets.nasa.gov/image/PIA04921/PIA04921~orig.jpg",
-                date = "2026-05-28"
-            )
+            loadApodCache()
         }
     }
 
@@ -543,10 +535,14 @@ class SpaceDataRepository(private val context: Context? = null) {
 
                 if (fetchedNews.isNotEmpty()) {
                     _newsList = fetchedNews
+                    saveNewsCache(fetchedNews)
                 }
+            } else {
+                loadNewsCache()
             }
         } catch (e: Exception) {
             e.printStackTrace()
+            loadNewsCache()
         }
     }
 
@@ -604,12 +600,12 @@ class SpaceDataRepository(private val context: Context? = null) {
                     val firstItem = items.getJSONObject(0)
                     val links = firstItem.optJSONArray("links")
                     val imageUrl = if (links != null && links.length() > 0) {
-                        links.getJSONObject(0).optString("href", null)
+                        links.getJSONObject(0).optString("href").takeIf { it.isNotBlank() }
                     } else null
 
                     val dataArray = firstItem.optJSONArray("data")
                     val description = if (dataArray != null && dataArray.length() > 0) {
-                        dataArray.getJSONObject(0).optString("description", null)
+                        dataArray.getJSONObject(0).optString("description").takeIf { it.isNotBlank() }
                     } else null
 
                     val collageUrls = mutableListOf<String>()
@@ -658,6 +654,101 @@ class SpaceDataRepository(private val context: Context? = null) {
             NasaMediaData(imageUrl = cachedImg, description = cachedDesc, isFromCache = true, isRateLimited = false)
         }
     }
+
+    private fun saveNewsCache(articles: List<NewsArticle>) {
+        if (context == null) return
+        try {
+            val array = JSONArray()
+            for (article in articles) {
+                val obj = JSONObject().apply {
+                    put("id", article.id)
+                    put("title", article.title)
+                    put("category", article.category)
+                    put("date", article.date)
+                    put("summary", article.summary)
+                    put("fullText", article.fullText)
+                    put("readTime", article.readTime)
+                    put("url", article.url)
+                    put("imageUrl", article.imageUrl)
+                }
+                array.put(obj)
+            }
+            val prefs = context.getSharedPreferences("starline_news_cache", Context.MODE_PRIVATE)
+            prefs.edit().putString("cached_news_list", array.toString()).apply()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    private fun loadNewsCache() {
+        if (context == null) return
+        try {
+            val prefs = context.getSharedPreferences("starline_news_cache", Context.MODE_PRIVATE)
+            val cachedJson = prefs.getString("cached_news_list", null)
+            if (cachedJson != null) {
+                val array = JSONArray(cachedJson)
+                val list = mutableListOf<NewsArticle>()
+                for (i in 0 until array.length()) {
+                    val obj = array.getJSONObject(i)
+                    list.add(
+                        NewsArticle(
+                            id = obj.optString("id", ""),
+                            title = obj.optString("title", ""),
+                            category = obj.optString("category", ""),
+                            date = obj.optString("date", ""),
+                            summary = obj.optString("summary", ""),
+                            fullText = obj.optString("fullText", ""),
+                            readTime = obj.optString("readTime", ""),
+                            url = obj.optString("url", ""),
+                            imageUrl = obj.optString("imageUrl", "")
+                        )
+                    )
+                }
+                if (list.isNotEmpty()) {
+                    _newsList = list
+                }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    private fun saveApodCache(apod: ApodData) {
+        if (context == null) return
+        try {
+            val prefs = context.getSharedPreferences("starline_apod_cache", Context.MODE_PRIVATE)
+            prefs.edit()
+                .putString("title", apod.title)
+                .putString("explanation", apod.explanation)
+                .putString("url", apod.url)
+                .putString("date", apod.date)
+                .apply()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    private fun loadApodCache(): ApodData {
+        if (context == null) return defaultApod()
+        val prefs = context.getSharedPreferences("starline_apod_cache", Context.MODE_PRIVATE)
+        val title = prefs.getString("title", null)
+        if (title != null) {
+            return ApodData(
+                title = title,
+                explanation = prefs.getString("explanation", "") ?: "",
+                url = prefs.getString("url", "") ?: "",
+                date = prefs.getString("date", "") ?: ""
+            )
+        }
+        return defaultApod()
+    }
+
+    private fun defaultApod() = ApodData(
+        title = "The Majestic Andromeda Galaxy",
+        explanation = "Andromeda is the nearest major galaxy to our Milky Way, containing over a trillion stars and spiraling dramatically through the local group. This fallback image is active due to rate-limiting or network status.",
+        url = "https://images-assets.nasa.gov/image/PIA04921/PIA04921~orig.jpg",
+        date = "2026-05-28"
+    )
 
     companion object {
         private var _newsList = listOf<NewsArticle>()

@@ -54,6 +54,13 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun verifySession(onResult: (Boolean) -> Unit) {
+        viewModelScope.launch {
+            val result = authRepository.verifySession()
+            onResult(result.isSuccess)
+        }
+    }
+
     fun clearState() {
         _authState.value = AuthState.Idle
     }

@@ -12,6 +12,7 @@ interface AuthRepository {
     suspend fun login(email: String, password: String): Result<UserSession>
     suspend fun register(email: String, password: String, displayName: String): Result<UserSession>
     suspend fun logout(): Result<Unit>
+    suspend fun verifySession(): Result<UserSession>
 }
 
 class FirebaseAuthRepository(context: Context) : AuthRepository {
@@ -29,6 +30,27 @@ class FirebaseAuthRepository(context: Context) : AuthRepository {
             firebaseAuth = FirebaseAuth.getInstance()
             useFirebase = firebaseAuth != null
             
+            // Synchronously check for cached user session on startup
+            val initialFbUser = firebaseAuth?.currentUser
+            if (initialFbUser != null) {
+                _currentUser.value = UserSession(
+                    uid = initialFbUser.uid,
+                    email = initialFbUser.email ?: "",
+                    displayName = initialFbUser.displayName ?: "Space Explorer",
+                    isLoggedIn = true
+                )
+            } else {
+                val isLoggedIn = sharedPrefs.getBoolean("is_logged_in", false)
+                if (isLoggedIn) {
+                    _currentUser.value = UserSession(
+                        uid = sharedPrefs.getString("uid", "mock_uid") ?: "mock_uid",
+                        email = sharedPrefs.getString("email", "explorer@cosmosapp.space") ?: "explorer@cosmosapp.space",
+                        displayName = sharedPrefs.getString("display_name", "Space Explorer") ?: "Space Explorer",
+                        isLoggedIn = true
+                    )
+                }
+            }
+            
             firebaseAuth?.addAuthStateListener { auth ->
                 val fbUser = auth.currentUser
                 if (fbUser != null) {
@@ -39,7 +61,17 @@ class FirebaseAuthRepository(context: Context) : AuthRepository {
                         isLoggedIn = true
                     )
                 } else {
-                    _currentUser.value = null
+                    val isLoggedIn = sharedPrefs.getBoolean("is_logged_in", false)
+                    if (isLoggedIn) {
+                        _currentUser.value = UserSession(
+                            uid = sharedPrefs.getString("uid", "mock_uid") ?: "mock_uid",
+                            email = sharedPrefs.getString("email", "explorer@cosmosapp.space") ?: "explorer@cosmosapp.space",
+                            displayName = sharedPrefs.getString("display_name", "Space Explorer") ?: "Space Explorer",
+                            isLoggedIn = true
+                        )
+                    } else {
+                        _currentUser.value = null
+                    }
                 }
             }
         } catch (e: Exception) {
@@ -161,6 +193,36 @@ class FirebaseAuthRepository(context: Context) : AuthRepository {
             sharedPrefs.edit().clear().apply()
             _currentUser.value = null
             return Result.success(Unit)
+        }
+    }
+
+    override suspend fun verifySession(): Result<UserSession> {
+        if (useFirebase && firebaseAuth != null) {
+            val user = firebaseAuth!!.currentUser
+            if (user != null) {
+                return try {
+                    user.reload().await()
+                    val session = UserSession(
+                        uid = user.uid,
+                        email = user.email ?: "",
+                        displayName = user.displayName ?: "Space Explorer",
+                        isLoggedIn = true
+                    )
+                    _currentUser.value = session
+                    Result.success(session)
+                } catch (e: Exception) {
+                    logout()
+                    Result.failure(e)
+                }
+            }
+            return Result.failure(Exception("No active session"))
+        } else {
+            val current = _currentUser.value
+            return if (current != null) {
+                Result.success(current)
+            } else {
+                Result.failure(Exception("No active session"))
+            }
         }
     }
 }
