@@ -33,13 +33,12 @@ fun SatelliteDetailScreen(
     onBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    BackHandler { onBack() }
+
     val context = LocalContext.current
     val repository = remember(context) { SpaceDataRepository(context) }
     val settingsManager = remember(context) { SettingsManager(context) }
     val initialSatellite = remember(satelliteName) { repository.satellites.find { it.name == satelliteName } }
-
-    // Intercept system back button
-    BackHandler { onBack() }
 
     if (initialSatellite == null) {
         Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) {

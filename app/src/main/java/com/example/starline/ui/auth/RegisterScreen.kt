@@ -1,5 +1,6 @@
 package com.example.starline.ui.auth
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.slideInVertically
@@ -48,6 +49,11 @@ fun RegisterScreen(
     var visible by remember { mutableStateOf(false) }
     var localError by remember { mutableStateOf<String?>(null) }
     val authState by viewModel.authState.collectAsState()
+
+    BackHandler {
+        viewModel.clearState()
+        onNavigateToLogin()
+    }
 
     LaunchedEffect(Unit) {
         delay(100)

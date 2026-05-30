@@ -1,6 +1,5 @@
 package com.example.starline
 
-import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -35,7 +34,7 @@ data class AppState(
 )
 
 @Composable
-fun MainNavigation() {
+fun MainNavigation(navigationViewModel: NavigationViewModel = viewModel()) {
     val context = LocalContext.current
     val favoritesManager = remember(context) { FavoritesManager(context) }
     val settingsManager = remember(context) { SettingsManager(context) }
@@ -43,44 +42,19 @@ fun MainNavigation() {
     val authViewModel: AuthViewModel = viewModel()
     val currentUser by authViewModel.currentUser.collectAsState()
 
-    // Route stack — start at Login unless already authenticated
-    var appState by remember {
-        mutableStateOf(AppState(route = if (currentUser != null) AppRoute.Main else AppRoute.Login))
-    }
+    val appState = navigationViewModel.appState
 
-    // If user becomes authenticated (e.g. persistent session), jump to Main and sync favorites and settings
+    // Helper so each screen can navigate without touching the ViewModel directly
+    fun navigate(newState: AppState) = navigationViewModel.updateState(newState)
+
+    // Jump to Main when user logs in; sync cloud data
     LaunchedEffect(currentUser) {
         if (currentUser != null) {
             favoritesManager.syncFromFirebase()
             settingsManager.syncFromFirebase()
-            if (appState.route in listOf(AppRoute.Login, AppRoute.Register)) {
-                appState = appState.copy(route = AppRoute.Main)
+            if (appState.route == AppRoute.Login || appState.route == AppRoute.Register) {
+                navigate(appState.copy(route = AppRoute.Main))
             }
-        }
-    }
-
-    // ── Back-press handler ───────────────────────────────────────────────
-    // Enabled whenever the system back should do something other than close the app.
-    val backEnabled = when (appState.route) {
-        AppRoute.Login -> false                                   // let system handle (exit)
-        AppRoute.Register -> true                                  // go back to Login
-        AppRoute.Main -> appState.selectedTab != BottomTab.Home   // non-Home tab → go to Home
-        else -> true                                               // detail / profile / settings
-    }
-
-    BackHandler(enabled = backEnabled) {
-        when (appState.route) {
-            AppRoute.Register ->
-                appState = appState.copy(route = AppRoute.Login)
-            AppRoute.Main ->
-                appState = appState.copy(selectedTab = BottomTab.Home)
-            AppRoute.PlanetDetail,
-            AppRoute.SatelliteDetail,
-            AppRoute.NewsDetail,
-            AppRoute.Profile,
-            AppRoute.Settings ->
-                appState = appState.copy(route = AppRoute.Main)
-            else -> Unit
         }
     }
 
@@ -91,59 +65,57 @@ fun MainNavigation() {
     ) {
         when (appState.route) {
             AppRoute.Login -> LoginScreen(
-                onLoginSuccess = { appState = appState.copy(route = AppRoute.Main) },
-                onNavigateToRegister = { appState = appState.copy(route = AppRoute.Register) },
+                onLoginSuccess   = { navigate(appState.copy(route = AppRoute.Main)) },
+                onNavigateToRegister = { navigate(appState.copy(route = AppRoute.Register)) },
                 viewModel = authViewModel
             )
 
             AppRoute.Register -> RegisterScreen(
-                onRegisterSuccess = { appState = appState.copy(route = AppRoute.Main) },
-                onNavigateToLogin = { appState = appState.copy(route = AppRoute.Login) },
+                onRegisterSuccess = { navigate(appState.copy(route = AppRoute.Main)) },
+                onNavigateToLogin = { navigate(appState.copy(route = AppRoute.Login)) },
                 viewModel = authViewModel
             )
 
             AppRoute.Main -> AppScaffold(
                 selectedTab = appState.selectedTab,
-                onTabChange = { tab -> appState = appState.copy(selectedTab = tab) },
+                onTabChange = { tab -> navigate(appState.copy(selectedTab = tab)) },
                 onNavigateToPlanetDetail = { name ->
-                    appState = appState.copy(route = AppRoute.PlanetDetail, planetName = name)
+                    navigate(appState.copy(route = AppRoute.PlanetDetail, planetName = name))
                 },
                 onNavigateToSatelliteDetail = { name ->
-                    appState = appState.copy(route = AppRoute.SatelliteDetail, satelliteName = name)
+                    navigate(appState.copy(route = AppRoute.SatelliteDetail, satelliteName = name))
                 },
                 onNavigateToNewsDetail = { id ->
-                    appState = appState.copy(route = AppRoute.NewsDetail, newsId = id)
+                    navigate(appState.copy(route = AppRoute.NewsDetail, newsId = id))
                 },
-                onNavigateToProfile = { appState = appState.copy(route = AppRoute.Profile) },
-                onNavigateToSettings = { appState = appState.copy(route = AppRoute.Settings) }
+                onNavigateToProfile  = { navigate(appState.copy(route = AppRoute.Profile)) },
+                onNavigateToSettings = { navigate(appState.copy(route = AppRoute.Settings)) }
             )
 
             AppRoute.PlanetDetail -> PlanetDetailScreen(
                 planetName = appState.planetName,
-                onBack = { appState = appState.copy(route = AppRoute.Main) }
+                onBack = { navigate(appState.copy(route = AppRoute.Main)) }
             )
 
             AppRoute.SatelliteDetail -> SatelliteDetailScreen(
                 satelliteName = appState.satelliteName,
-                onBack = { appState = appState.copy(route = AppRoute.Main) }
+                onBack = { navigate(appState.copy(route = AppRoute.Main)) }
             )
 
             AppRoute.NewsDetail -> NewsDetailScreen(
                 newsId = appState.newsId,
-                onBack = { appState = appState.copy(route = AppRoute.Main) }
+                onBack = { navigate(appState.copy(route = AppRoute.Main)) }
             )
 
             AppRoute.Profile -> ProfileScreen(
-                onBack = { appState = appState.copy(route = AppRoute.Main) },
-                onNavigateToSettings = { appState = appState.copy(route = AppRoute.Settings) },
-                onLogout = {
-                    appState = AppState(route = AppRoute.Login)
-                },
+                onBack = { navigate(appState.copy(route = AppRoute.Main)) },
+                onNavigateToSettings = { navigate(appState.copy(route = AppRoute.Settings)) },
+                onLogout = { navigate(AppState(route = AppRoute.Login)) },
                 viewModel = authViewModel
             )
 
             AppRoute.Settings -> SettingsScreen(
-                onBack = { appState = appState.copy(route = AppRoute.Main) }
+                onBack = { navigate(appState.copy(route = AppRoute.Main)) }
             )
         }
     }

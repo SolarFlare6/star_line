@@ -30,6 +30,8 @@ fun SettingsScreen(
     onBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    BackHandler { onBack() }
+
     val context = LocalContext.current
     val apiKeyManager = remember { ApiKeyManager(context) }
     val settingsManager = remember(context) { SettingsManager(context) }
@@ -40,9 +42,6 @@ fun SettingsScreen(
 
     var nasaKeyInput by remember { mutableStateOf(if (apiKeyManager.isUsingDefaultNasaKey) "" else (apiKeyManager.customNasaKey ?: "")) }
     var geminiKeyInput by remember { mutableStateOf(if (apiKeyManager.isUsingDefaultGeminiKey) "" else (apiKeyManager.customGeminiKey ?: "")) }
-
-    // Intercept system back button
-    BackHandler { onBack() }
 
     Column(
         modifier = modifier

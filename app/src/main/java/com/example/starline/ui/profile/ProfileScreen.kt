@@ -35,11 +35,10 @@ fun ProfileScreen(
     viewModel: AuthViewModel,
     modifier: Modifier = Modifier
 ) {
+    BackHandler { onBack() }
+
     val currentUser by viewModel.currentUser.collectAsState()
     var showLogoutDialog by remember { mutableStateOf(false) }
-
-    // Intercept system back button
-    BackHandler { onBack() }
 
     if (showLogoutDialog) {
         AlertDialog(

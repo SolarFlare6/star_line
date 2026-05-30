@@ -36,13 +36,12 @@ fun PlanetDetailScreen(
     onBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    BackHandler { onBack() }
+
     val context = LocalContext.current
     val repository = remember(context) { SpaceDataRepository(context) }
     val settingsManager = remember(context) { SettingsManager(context) }
     var planet by remember { mutableStateOf(repository.planets.find { it.name == planetName }) }
-
-    // Intercept system back button
-    BackHandler { onBack() }
 
     var nasaMedia by remember { mutableStateOf<NasaMediaData?>(null) }
     var isLoadingNasaMedia by remember { mutableStateOf(true) }

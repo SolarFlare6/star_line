@@ -1,5 +1,6 @@
 package com.example.starline.ui.main
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -48,6 +49,11 @@ fun AppScaffold(
     onNavigateToSettings: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    if (selectedTab != BottomTab.Home) {
+        BackHandler {
+            onTabChange(BottomTab.Home)
+        }
+    }
 
     Box(modifier = modifier.fillMaxSize()) {
         StarfieldBackground()

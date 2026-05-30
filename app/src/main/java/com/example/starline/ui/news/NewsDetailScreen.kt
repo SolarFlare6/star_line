@@ -33,6 +33,8 @@ fun NewsDetailScreen(
     onBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    BackHandler { onBack() }
+
     val context = LocalContext.current
     val repository = remember { SpaceDataRepository(context) }
     val favoritesManager = remember { FavoritesManager(context) }
@@ -45,9 +47,6 @@ fun NewsDetailScreen(
     val clipboardManager = LocalClipboardManager.current
 
     var isFavorite by remember(newsId) { mutableStateOf(favoritesManager.isArticleFavorite(newsId)) }
-
-    // Intercept system back button
-    BackHandler { onBack() }
 
     if (article == null) {
         Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
